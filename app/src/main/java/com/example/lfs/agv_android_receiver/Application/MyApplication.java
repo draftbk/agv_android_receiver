@@ -12,6 +12,7 @@ import android.net.wifi.WifiManager;
 
 public class MyApplication extends Application{
     public static String connectIP="192.168.0.1";
+    public static int connectPort=8087;
     public static String selfIP="192.168.0.1";
     public static String workerId="000000";
     public static String cancelId="";
@@ -22,6 +23,8 @@ public class MyApplication extends Application{
         //2、取出数据
         String ip = dates.getString("ip","192.168.0.1");
         connectIP=ip;
+        String port = dates.getString("port","2000");
+        connectPort=Integer.parseInt(port);
     }
     public static String getIp(Context context){
         //1、打开Preferences，名称为setting，如果存在则打开它，否则创建新的Preferences
@@ -29,6 +32,17 @@ public class MyApplication extends Application{
         //2、取出数据
         String ip = dates.getString("ip",connectIP);
         return ip;
+    }
+    public static void savePort(Context context, String port){
+        connectPort=Integer.parseInt(port);
+        //1、打开Preferences，名称为setting，如果存在则打开它，否则创建新的Preferences
+        SharedPreferences dates = context.getSharedPreferences("Dates", 0);
+        //2、让setting处于编辑状态
+        SharedPreferences.Editor editor = dates.edit();
+        //3、存放数据
+        editor.putString("port",port);
+        //4、完成提交
+        editor.commit();
     }
 
     public static void saveIp(Context context, String ip){

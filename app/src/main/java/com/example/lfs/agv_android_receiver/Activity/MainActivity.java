@@ -11,6 +11,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -185,7 +186,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (switchShop.isChecked()){
                     showToast("先断开连接再设置ip");
                 }else {
-                    showInputDialog();
+                    showSettingDialog();
                 }
                 break;
             case R.id.menu_task_list:
@@ -203,23 +204,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 
-    private void showInputDialog() {
+    private void showSettingDialog() {
     /*@setView 装入一个EditView
      */
-        final EditText editText = new EditText(MainActivity.this);
-        editText.setText(MyApplication.connectIP);
         AlertDialog.Builder inputDialog =
                 new AlertDialog.Builder(MainActivity.this);
-        inputDialog.setTitle("输入对应IP地址").setView(editText);
+        final View dialogView = LayoutInflater.from(MainActivity.this)
+                .inflate(R.layout.setting_dialog,null);
+        inputDialog.setTitle("输入对应IP地址和端口号");
+        inputDialog.setView(dialogView);
+        final EditText ipEdit=dialogView.findViewById(R.id.edit_ip);
+        ipEdit.setText(MyApplication.connectIP);
+        final EditText portEdit=dialogView.findViewById(R.id.edit_port);
+        portEdit.setText(MyApplication.connectPort+"");
         inputDialog.setPositiveButton("确定",
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        String inputIP=editText.getText().toString();
+                        String inputIP=ipEdit.getText().toString();
+                        String inputPort=portEdit.getText().toString();
                         Toast.makeText(MainActivity.this,
                                 inputIP,
                                 Toast.LENGTH_SHORT).show();
                         MyApplication.saveIp(MainActivity.this,inputIP);
+                        MyApplication.savePort(MainActivity.this,inputPort);
                     }
                 }).show();
     }

@@ -24,6 +24,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -396,31 +397,37 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.menu_connect:
-                showInputDialog();
+                showSettingDialog();
                 break;
             default:
                 break;
         }
         return true;
     }
-    private void showInputDialog() {
+    private void showSettingDialog() {
     /*@setView 装入一个EditView
      */
-        final EditText editText = new EditText(LoginActivity.this);
-        editText.setText(MyApplication.connectIP);
         AlertDialog.Builder inputDialog =
                 new AlertDialog.Builder(LoginActivity.this);
-        inputDialog.setTitle("输入对应IP地址").setView(editText);
+        final View dialogView = LayoutInflater.from(LoginActivity.this)
+                .inflate(R.layout.setting_dialog,null);
+        inputDialog.setTitle("输入对应IP地址和端口号");
+        inputDialog.setView(dialogView);
+        final EditText ipEdit=dialogView.findViewById(R.id.edit_ip);
+        ipEdit.setText(MyApplication.connectIP);
+        final EditText portEdit=dialogView.findViewById(R.id.edit_port);
+        portEdit.setText(MyApplication.connectPort+"");
         inputDialog.setPositiveButton("确定",
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        String inputIP=editText.getText().toString();
+                        String inputIP=ipEdit.getText().toString();
+                        String inputPort=portEdit.getText().toString();
                         Toast.makeText(LoginActivity.this,
                                 inputIP,
                                 Toast.LENGTH_SHORT).show();
                         MyApplication.saveIp(LoginActivity.this,inputIP);
-
+                        MyApplication.savePort(LoginActivity.this,inputPort);
                     }
                 }).show();
     }

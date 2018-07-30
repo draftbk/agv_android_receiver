@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <EditText
+        android:id="@+id/edit_ip"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:gravity="center"
+        android:hint="ip"
+        android:layout_gravity="center_horizontal"
+        android:padding="15dp"
+        android:textColor="@android:color/black"
+        android:textSize="18dp"/>
+
+    <EditText
+        android:id="@+id/edit_port"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:gravity="center"
+        android:hint="port"
+        android:layout_gravity="center_horizontal"
+        android:padding="15dp"
+        android:inputType="number"
+        android:textColor="@android:color/black"
+        android:textSize="18dp"/>
+
+
+
+</LinearLayout>
