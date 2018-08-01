@@ -26,12 +26,20 @@ import android.widget.Toast;
 
 import com.example.lfs.agv_android_receiver.Adapter.TaskAdapter;
 import com.example.lfs.agv_android_receiver.Application.MyApplication;
+import com.example.lfs.agv_android_receiver.Model.MapPoint;
 import com.example.lfs.agv_android_receiver.Model.Task;
 import com.example.lfs.agv_android_receiver.R;
 import com.example.lfs.agv_android_receiver.Service.MyService;
 
+import java.io.UnsupportedEncodingException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -44,6 +52,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ArrayList<Task> taskList;
     private TaskAdapter taskAdapter;
     private int taskMaxNumber=10;
+    private int myPosition,tempChoose;
+    private List<MapPoint> pointList;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,7 +66,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
                 mySocketBinder= (MyService.MySocketBinder) service;
-                mySocketBinder.startSocket(MyApplication.connectIP, 2000,handler);
+                mySocketBinder.startSocket(MyApplication.connectIP, MyApplication.connectPort,handler);
             }
 
             @Override
@@ -67,6 +77,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void init() {
+        //从数据库获得position
+        myPosition=MyApplication.getMyPostion(MainActivity.this);
+        pointList=new ArrayList<MapPoint>();
+        getPointFromSql();
         textTitle=findViewById(R.id.text_title);
         textContent=findViewById(R.id.text_content);
         textRemark=findViewById(R.id.text_remark);
@@ -100,6 +114,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }else if (msg.what==2){
                     if (msg.obj.toString().equals("connected")){
                         showToast("连接成功");
+                        //发送位置和IP信息
+                        try {
+                            String message="s20001"+","+pointList.get(MyApplication.myPostion).getId()+","+MyApplication.selfIP;
+                            message=new String(message.getBytes("UTF-8"));
+                            showToast(mySocketBinder.sendMessage(message));
+                        } catch (UnsupportedEncodingException e) {
+                            e.printStackTrace();
+                        }
                     }else if (msg.obj.toString().equals("unconnected")){
                         showToast("连接失败，请重试");
                         switchShop.performClick();
@@ -189,8 +211,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     showSettingDialog();
                 }
                 break;
-            case R.id.menu_task_list:
-                showToast("233");
+            case R.id.menu_point_list:
+                if (switchShop.isChecked()){
+                    showChoosePositionDialog();
+                }else {
+                    showToast("先连接再设置");
+                }
+
                 break;
             default:
                 break;
@@ -230,6 +257,85 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         MyApplication.savePort(MainActivity.this,inputPort);
                     }
                 }).show();
+    }
+
+    private void showChoosePositionDialog(){
+
+        //获取 items
+        final String[] items = new String[pointList.size()];
+        for(int i=0;i<pointList.size();i++){
+            items[i]=pointList.get(i).getName();
+        }
+        AlertDialog.Builder singleChoiceDialog =
+                new AlertDialog.Builder(MainActivity.this);
+        singleChoiceDialog.setTitle("选择你当前所在位置");
+        // 第二个参数是默认选项，此处设置为0
+        singleChoiceDialog.setSingleChoiceItems(items, myPosition,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        tempChoose=which;
+                    }
+                });
+        singleChoiceDialog.setPositiveButton("确定",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (tempChoose != -1) {
+                            Toast.makeText(MainActivity.this,
+                                    "你选择了" + items[tempChoose],
+                                    Toast.LENGTH_SHORT).show();
+                            myPosition = tempChoose;
+                            MyApplication.saveMyPosition(MainActivity.this,myPosition);
+                            //发送位置和IP信息
+                            try {
+                                String message="s20001"+","+pointList.get(MyApplication.myPostion).getId()+","+MyApplication.selfIP;
+                                message=new String(message.getBytes("UTF-8"));
+                                showToast(mySocketBinder.sendMessage(message));
+                            } catch (UnsupportedEncodingException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                });
+        singleChoiceDialog.show();
+    }
+    //从数据库获取点信息
+    public void getPointFromSql()
+    {
+        //在android中操作数据库最好在子线程中执行，否则可能会报异常
+        new Thread()
+        {
+            public void run() {
+                try {
+                    //注册驱动
+                    Class.forName("com.mysql.jdbc.Driver");
+                    String url = "jdbc:mysql://10.24.4.63:3306/agvsystem";
+                    Connection conn = DriverManager.getConnection(url, "root", "19940829");
+                    Statement stmt = conn.createStatement();
+                    String sql = "select * from point";
+                    ResultSet rs = stmt.executeQuery(sql);
+                    // 更新 pointList
+                    pointList.clear();
+                    while (rs.next()) {
+                        Log.e("slf", "field1-->"+rs.getInt(1)+"  field2-->"+rs.getString(2)
+                                +"  field3-->"+rs.getInt(3));
+                        pointList.add(new MapPoint(rs.getInt(1),rs.getInt(3),rs.getString(2)));
+                    }
+                    rs.close();
+                    stmt.close();
+                    conn.close();
+                    Log.e("slf", "success to connect!");
+                }catch(ClassNotFoundException e)
+                {
+                    Log.e("slf", "fail to connect!"+"  "+e.getMessage());
+                } catch (SQLException e)
+                {
+                    Log.e("slf", "fail to connect!"+"  "+e.getMessage());
+                }
+            };
+        }.start();
+
     }
 
 }

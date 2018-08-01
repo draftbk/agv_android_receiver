@@ -16,6 +16,7 @@ public class MyApplication extends Application{
     public static String selfIP="192.168.0.1";
     public static String workerId="000000";
     public static String cancelId="";
+    public static int myPostion=0;
 
     public static void initIp(Context context){
         //1、打开Preferences，名称为setting，如果存在则打开它，否则创建新的Preferences
@@ -25,6 +26,14 @@ public class MyApplication extends Application{
         connectIP=ip;
         String port = dates.getString("port","2000");
         connectPort=Integer.parseInt(port);
+    }
+
+    public static int getMyPostion(Context context){
+        //1、打开Preferences，名称为setting，如果存在则打开它，否则创建新的Preferences
+        SharedPreferences dates = context.getSharedPreferences("Dates", 0);
+        //2、取出数据
+        myPostion = dates.getInt("position",myPostion);
+        return myPostion;
     }
     public static String getIp(Context context){
         //1、打开Preferences，名称为setting，如果存在则打开它，否则创建新的Preferences
@@ -41,6 +50,18 @@ public class MyApplication extends Application{
         SharedPreferences.Editor editor = dates.edit();
         //3、存放数据
         editor.putString("port",port);
+        //4、完成提交
+        editor.commit();
+    }
+
+    public static void saveMyPosition(Context context, int postion){
+        myPostion=postion;
+        //1、打开Preferences，名称为setting，如果存在则打开它，否则创建新的Preferences
+        SharedPreferences dates = context.getSharedPreferences("Dates", 0);
+        //2、让setting处于编辑状态
+        SharedPreferences.Editor editor = dates.edit();
+        //3、存放数据
+        editor.putInt("position",postion);
         //4、完成提交
         editor.commit();
     }
